@@ -5,56 +5,79 @@ const app = express();
 const port = 8001;
 
 const db = new sqlite3.Database("catalog.db");
-db.run(`CREATE TABLE IF NOT EXISTS catalog (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
-  quantity INTEGER,
-  price DOUBLE,
-  type TEXT
-)`);
-const catalogData = [
-  {
-    title: "How to get a good grade in DOS in 40 minutes a day",
-    quantity: 10,
-    price: 50,
-    type: "distributed systems",
-  },
-  {
-    title: "RPCs for Noobs",
-    quantity: 5,
-    price: 30,
-    type: "distributed systems",
-  },
-  {
-    title: "Xen and the Art of Surviving Undergraduate School",
-    quantity: 5,
-    price: 20,
-    type: "undergraduate school",
-  },
-  {
-    title: "Cooking for the Impatient Undergrad",
-    quantity: 5,
-    price: 50,
-    type: "undergraduate school",
-  },
-];
-const insertData = () => {
-  catalogData.forEach((item) => {
-    const { title, quantity, type } = item;
+
+db.run(`DROP TABLE IF EXISTS catalog`, (err) => {
+  if (err) {
+    console.error("Error dropping table:", err.message);
+  } else {
+    console.log("Table dropped successfully");
+
+    // Create a new catalog table with reset id
     db.run(
-      "INSERT INTO catalog (title, quantity, type) VALUES (?, ?, ?)",
-      [title, quantity, type],
-      (err) => {
-        if (err) {
-          console.error("Error inserting data:", err.message);
+      `CREATE TABLE IF NOT EXISTS catalog (
+      id INTEGER PRIMARY KEY,
+      title TEXT,
+      quantity INTEGER,
+      price DOUBLE,
+      type TEXT
+    )`,
+      (createErr) => {
+        if (createErr) {
+          console.error("Error creating table:", createErr.message);
         } else {
-          console.log("Data inserted successfully:", title);
+          console.log("Table created successfully");
+
+          const catalogData = [
+            {
+              title: "How to get a good grade in DOS in 40 minutes a day",
+              quantity: 10,
+              price: 50,
+              type: "distributed systems",
+            },
+            {
+              title: "RPCs for Noobs",
+              quantity: 23,
+              price: 30,
+              type: "distributed systems",
+            },
+            {
+              title: "Xen and the Art of Surviving Undergraduate School",
+              quantity: 55,
+              price: 20,
+              type: "undergraduate school",
+            },
+            {
+              title: "Cooking for the Impatient Undergrad",
+              quantity: 59,
+              price: 50,
+              type: "undergraduate school",
+            },
+          ];
+
+          let lastId = 0;
+          const insertData = () => {
+            catalogData.forEach((item) => {
+              const { title, quantity, type, price } = item;
+              lastId++;
+              db.run(
+                "INSERT INTO catalog (id, title, quantity, type, price) VALUES (?, ?, ?, ?, ?)",
+                [lastId, title, quantity, type, price],
+                (err) => {
+                  if (err) {
+                    console.error("Error inserting data:", err.message);
+                  } else {
+                    console.log("Data inserted successfully:", title);
+                  }
+                }
+              );
+            });
+          };
+          insertData();
         }
       }
     );
-  });
-};
-insertData();
+  }
+});
 
 app.get("/purchase/:queryParam", (req, res) => {
   const { queryParam } = req.params;
@@ -114,43 +137,53 @@ app.get("/search/:searchTerm", (req, res) => {
 });
 
 app.put("/update/:itemId", (req, res) => {
-  const { param } = req.params;
-  const isNumeric = !isNaN(param);
+  try {
+    const { itemId } = req.params;
+    const isNumeric = !isNaN(itemId);
 
-  const key = isNumeric ? "id" : "title";
-  const value = param;
-  console.log(key);
-  console.log(value);
-  // Query the catalog table in the SQLite database by item ID
-  db.all(`SELECT * FROM catalog WHERE ${key} = ?`, [value], (err, rows) => {
-    if (err) {
-      console.error(err.message);
-      return res.status(500).json({ error: "Internal server error" });
-    }
+    const key = isNumeric ? "id" : "title";
+    const value = isNumeric ? parseInt(itemId) : itemId;
+    if (value <= 4 || !isNumeric) {
+      // Query the catalog table in the SQLite database by item ID
+      db.all(`SELECT * FROM catalog WHERE ${key} = ?`, [value], (err, rows) => {
+        if (err) {
+          console.error(err.message);
+          return res.status(500).json({ error: "Internal server error" });
+        }
 
-    rows.forEach((row) => {
-      if (row && row.quantity > 0) {
-        // Decrease the quantity by one
-        const updatedQuantity = row.quantity - 1;
+        const q = rows[rows.length - 1].quantity;
+        const title = rows[0].title;
 
-        // Update the quantity in the database
-        db.run(
-          `UPDATE catalog SET quantity = ? WHERE ${key} = ?`,
-          [updatedQuantity, value],
-          (updateErr) => {
-            if (updateErr) {
-              console.error(updateErr.message);
-              return res.status(500).json({ error: "Internal server error" });
+        if (rows && q > 0) {
+          // Decrease the quantity by one
+          const updatedQuantity = q - 1;
+
+          // Update the quantity in the database
+          db.run(
+            `UPDATE catalog SET quantity = ? WHERE ${key} = ?`,
+            [updatedQuantity, value],
+            (updateErr) => {
+              if (updateErr) {
+                console.error(updateErr.message);
+                return res.status(500).json({ error: "Internal server error" });
+              }
+
+              res.status(200).json({
+                title: title,
+                message: "Quantity updated successfully",
+              });
             }
-
-            res.status(200).json({ message: "Quantity updated successfully" });
-          }
-        );
-      } else {
-        res.status(404).json({ error: "Item not found or out of stock" });
-      }
-    });
-  });
+          );
+        } else {
+          res.status(404).json({ error: "Item not found or out of stock" });
+        }
+      });
+    } else {
+      res.status(404).json({ error: "Item not found or out of stock" });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // db.close((err) => {

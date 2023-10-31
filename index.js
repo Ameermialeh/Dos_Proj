@@ -41,15 +41,29 @@ app.post("/purchase/:subject", (req, res) => {
         const decrementRequest = http.request(
           decrementRequestOptions,
           (decrementResponse) => {
-            if (decrementResponse.statusCode === 200) {
-              res.json({
-                message: `Item ${subject} purchased successfully`,
-              });
-            } else {
-              res.status(500).json({ error: "Error updating stock" });
-            }
+            const responseData = [];
+
+            decrementResponse.on("data", (chunk) => {
+              responseData.push(chunk);
+            });
+
+            decrementResponse.on("end", () => {
+              const responseText = responseData.join("");
+              if (decrementResponse.statusCode === 200) {
+                const responseObject = JSON.parse(responseText);
+                res.json({
+                  message: `Item ${responseObject.title} purchased successfully`,
+                });
+              } else {
+                res.status(500).json({
+                  error: "Error updating stock",
+                  response: responseData,
+                });
+              }
+            });
           }
         );
+        decrementRequest.end();
       });
     }
   );
