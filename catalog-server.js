@@ -137,6 +137,24 @@ app.get("/search/:searchTerm", (req, res) => {
   });
 });
 
+app.get("/info/:itemId", (req, res) => {
+  const { itemId } = req.params;
+  let query = "SELECT title, quantity, price FROM catalog WHERE id LIKE ?";
+
+  db.all(query, [itemId], (err, rows) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    if (rows && rows.length > 0) {
+      res.json(rows);
+    } else {
+      res.status(404).json({ error: "Items not found" });
+    }
+  });
+});
+
 app.put("/update/:itemId", (req, res) => {
   try {
     const { itemId } = req.params;
