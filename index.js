@@ -3,20 +3,20 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 const app = express();
-const port = 3000;
+const port = 8000;
 
 app.use(bodyParser.json());
 
 const catalogServerOptions = {
-  hostname: "catalog-server",
+  hostname: "localhost",
   port: 8001,
 };
 
 app.post("/purchase/:subject", (req, res) => {
   const { subject } = req.params;
 
-  const catalogRequest = http.request(
-    `${catalogServerOptions.hostname}:${catalogServerOptions.port}/purchase/${subject}`,
+  const catalogRequest = http.get(
+    `http://${catalogServerOptions.hostname}:${catalogServerOptions.port}/purchase/${subject}`,
     (catalogResponse) => {
       let data = "";
 
@@ -32,12 +32,14 @@ app.post("/purchase/:subject", (req, res) => {
           return res.status(400).json({ error: "Item out of stock" });
         }
 
+        const decrementRequestOptions = {
+          hostname: catalogServerOptions.hostname,
+          port: catalogServerOptions.port,
+          path: `/update/${subject}`,
+          method: "PUT",
+        };
         const decrementRequest = http.request(
-          {
-            ...catalogServerOptions,
-            path: `/update/${subject}`,
-            method: "PUT",
-          },
+          decrementRequestOptions,
           (decrementResponse) => {
             if (decrementResponse.statusCode === 200) {
               res.json({
@@ -53,8 +55,9 @@ app.post("/purchase/:subject", (req, res) => {
   );
 
   catalogRequest.on("error", (error) => {
-    console.error("Error querying catalog server:", error);
-    res.status(500).json({ error: "Error querying catalog server" });
+    res
+      .status(500)
+      .json({ error: "Error querying catalog server: " + error.message });
   });
 
   catalogRequest.end();
