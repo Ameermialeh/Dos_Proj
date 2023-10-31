@@ -14,7 +14,7 @@ const catalogServerOptions = {
 
 app.post("/purchase/:subject", (req, res) => {
   const { subject } = req.params;
-
+  console.log(subject);
   const catalogRequest = http.get(
     `http://${catalogServerOptions.hostname}:${catalogServerOptions.port}/purchase/${subject}`,
     (catalogResponse) => {
