@@ -110,11 +110,12 @@ app.get("/purchase/:queryParam", (req, res) => {
 
 app.get("/search/:searchTerm", (req, res) => {
   const { searchTerm } = req.params;
-  const isSearchByType = req.path.includes("type"); // Check if search is by type
-
   let query;
   let params;
-  if (isSearchByType) {
+  if (
+    searchTerm == "distributed systems" ||
+    searchTerm == "undergraduate school"
+  ) {
     query = "SELECT id, title FROM catalog WHERE type LIKE ?";
     params = [`%${searchTerm}%`];
   } else {
