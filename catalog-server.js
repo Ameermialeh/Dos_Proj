@@ -139,7 +139,7 @@ app.get("/search/:searchTerm", (req, res) => {
 
 app.get("/info/:itemId", (req, res) => {
   const { itemId } = req.params;
-  let query = "SELECT title, quantity, price FROM catalog WHERE id LIKE ?";
+  let query = "SELECT * FROM catalog WHERE id LIKE ?";
 
   db.all(query, [itemId], (err, rows) => {
     if (err) {
@@ -205,13 +205,6 @@ app.put("/update/:itemId", (req, res) => {
   }
 });
 
-// db.close((err) => {
-//   if (err) {
-//     console.error("Error closing database:", err.message);
-//   } else {
-//     console.log("Database connection closed.");
-//   }
-// });
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
