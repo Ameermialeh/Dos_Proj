@@ -1,8 +1,10 @@
 const http = require("http");
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 8000;
+
 //info end point
+app.get("/books", (req, res) => res.json({ book: "no books here" }));
 app.get("/info/:itemId", (req, res) => {
   const { itemId } = req.params; //get item id obj
 
@@ -99,8 +101,9 @@ app.post("/purchase/:subject", (req, res) => {
       orderRes.on("end", () => {
         if (orderRes.statusCode === 200) {
           const responseObject = JSON.parse(data);
+
           res.json({
-            message: `Item ${responseObject} purchased successfully`,
+            message: ` ${responseObject.message} `,
           });
         } else {
           res.status(500).json({
