@@ -10,7 +10,7 @@ app.get("/info/:itemId", (req, res) => {
 
   try {
     const catalogRequest = http.get(
-      `http://localhost:8001/info/${itemId}`, //call catalog service
+      `http://172.18.0.7:8001/info/${itemId}`, //call catalog service
       (catalogRes) => {
         let data = "";
 
@@ -47,7 +47,7 @@ app.get("/search/:query", (req, res) => {
 
   try {
     const catalogRequest = http.get(
-      `http://localhost:8001/search/${query}`, //call catalog service
+      `http://172.18.0.7:8001/search/${query}`, //call catalog service
       (catalogRes) => {
         let data = "";
 
@@ -83,8 +83,8 @@ app.post("/purchase/:subject", (req, res) => {
   const { subject } = req.params;
 
   const orderOptions = {
-    hostname: "localhost",
-    port: 8000,
+    hostname: "172.18.0.8",
+    port: 8002,
     path: `/purchase/${subject}`,
     method: "POST",
   };

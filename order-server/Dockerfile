@@ -10,13 +10,9 @@ COPY package*.json ./
 # Install your application's dependencies
 RUN npm install
 
-# Bundle your app source
-COPY ../src/order-server.js ./ 
-COPY ../src/catalog-server.js ./ 
-COPY ../src/frontend-server.js ./ 
-COPY ../src/catalog.db ./
+COPY . . 
 # Expose the port the app runs on
-EXPOSE 8002
-
+EXPOSE 8001
+# WORKDIR /app/src
 # Define the command to run your application
-CMD ["node", "order-server.js"]
+CMD ["npm", "run" ,"start-dev"]

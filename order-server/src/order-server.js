@@ -8,13 +8,12 @@ const port = 8002;
 app.use(bodyParser.json());
 
 const catalogServerOptions = {
-  hostname: "localhost",
+  hostname: "172.18.0.7",
   port: 8001,
 };
 
 app.post("/purchase/:subject", (req, res) => {
   const { subject } = req.params;
-  console.log(subject);
   const catalogRequest = http.get(
     `http://${catalogServerOptions.hostname}:${catalogServerOptions.port}/purchase/${subject}`,
     (catalogResponse) => {

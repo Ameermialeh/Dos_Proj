@@ -4,78 +4,11 @@ const sqlite3 = require("sqlite3").verbose();
 const app = express();
 const port = 8001;
 
-const db = new sqlite3.Database("catalog.db");
-
-db.run(`DROP TABLE IF EXISTS catalog`, (err) => {
+const db = new sqlite3.Database("catalog.db", sqlite3.OPEN_READWRITE, (err) => {
   if (err) {
-    console.error("Error dropping table:", err.message);
+    console.error("Error opening database:", err.message);
   } else {
-    console.log("Table dropped successfully");
-
-    // Create a new catalog table with reset id
-    db.run(
-      `CREATE TABLE IF NOT EXISTS catalog (
-      id INTEGER PRIMARY KEY,
-      title TEXT,
-      quantity INTEGER,
-      price DOUBLE,
-      type TEXT
-    )`,
-      (createErr) => {
-        if (createErr) {
-          console.error("Error creating table:", createErr.message);
-        } else {
-          console.log("Table created successfully");
-
-          const catalogData = [
-            {
-              title: "How to get a good grade in DOS in 40 minutes a day",
-              quantity: 10,
-              price: 50,
-              type: "distributed systems",
-            },
-            {
-              title: "RPCs for Noobs",
-              quantity: 23,
-              price: 30,
-              type: "distributed systems",
-            },
-            {
-              title: "Xen and the Art of Surviving Undergraduate School",
-              quantity: 55,
-              price: 20,
-              type: "undergraduate school",
-            },
-            {
-              title: "Cooking for the Impatient Undergrad",
-              quantity: 59,
-              price: 50,
-              type: "undergraduate school",
-            },
-          ];
-
-          let lastId = 0;
-          const insertData = () => {
-            catalogData.forEach((item) => {
-              const { title, quantity, type, price } = item;
-              lastId++;
-              db.run(
-                "INSERT INTO catalog (id, title, quantity, type, price) VALUES (?, ?, ?, ?, ?)",
-                [lastId, title, quantity, type, price],
-                (err) => {
-                  if (err) {
-                    console.error("Error inserting data:", err.message);
-                  } else {
-                    console.log("Data inserted successfully:", title);
-                  }
-                }
-              );
-            });
-          };
-          insertData();
-        }
-      }
-    );
+    console.log("Connected to the database.");
   }
 });
 
@@ -132,7 +65,7 @@ app.get("/search/:searchTerm", (req, res) => {
     if (rows && rows.length > 0) {
       res.json(rows);
     } else {
-      res.status(404).json({ error: "Items not found" });
+      res.status(404).json({ error: "Items not founds" });
     }
   });
 });
@@ -150,7 +83,7 @@ app.get("/info/:itemId", (req, res) => {
     if (rows && rows.length > 0) {
       res.json(rows);
     } else {
-      res.status(404).json({ error: "Items not found" });
+      res.status(404).json({ error: "Items not founds" });
     }
   });
 });
