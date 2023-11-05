@@ -1,0 +1,34 @@
+version: '3'
+services:
+  frontend-server:
+    build: 
+      context: ./frontend-server
+    ports:
+      - "8000:8000"
+    networks:
+      - internal-network
+    depends_on:
+      - catalog-server
+      - order-server
+
+  order-server:
+    build:  
+      context: ./order-server
+    ports:
+      - "8002:8002"
+    networks:
+      - internal-network
+    depends_on:
+      - catalog-server
+
+  catalog-server:
+    build: 
+      context: ./catalog-server
+    ports:
+      - "8001:8001"
+    networks:
+      - internal-network
+
+networks:
+  internal-network:
+    driver: bridge
