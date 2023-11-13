@@ -13,6 +13,6 @@ RUN npm install
 COPY . . 
 # Expose the port the app runs on
 EXPOSE 8001
-# WORKDIR /app/src
+ 
 # Define the command to run your application
 CMD ["npm", "run" ,"start-dev"]
