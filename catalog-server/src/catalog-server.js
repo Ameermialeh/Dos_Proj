@@ -15,36 +15,30 @@ const db = new sqlite3.Database("catalog.db", sqlite3.OPEN_READWRITE, (err) => {
 
 // Search end point request come from order
 // http://172.18.0.7:8001/purchase/queryParam
-app.get("/purchase/:queryParam", (req, res) => {
-  const { queryParam } = req.params;
+app.get("/purchase/:itemID", (req, res) => {
+  const { itemID } = req.params;
 
-  // Check if the query parameter is a number (item ID) or a string (item name)
-  const isItemId = /^\d+$/.test(queryParam);
-
-  let query;
-  let params;
-  if (isItemId) {
-    //if queryParam was id then select from db where id = queryParam
-    query = "SELECT * FROM catalog WHERE id = ?";
-    params = [queryParam];
-  } else {
-    //if queryParam was item name then select from db where title = queryParam
-    query = "SELECT * FROM catalog WHERE title LIKE ?";
-    params = [`%${queryParam}%`];
-  }
-  //send query to db
-  db.all(query, params, (err, rows) => {
-    if (err) {
-      console.error(err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    rows.forEach((row) => {
-      // send the quantity for the item as res
-      res.json({
-        quantity: row.quantity,
+  let query = "SELECT * FROM catalog WHERE id = ?";
+  let params = [itemID];
+  if (itemID <= 4) {
+    //send query to db
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      const responses = [];
+      rows.forEach((row) => {
+        // Collect responses for each item
+        responses.push({
+          quantity: row.quantity,
+        });
       });
+      res.status(200).json(responses);
     });
-  });
+  } else {
+    res.status(404).json({ message: "Item not found" });
+  }
 });
 // Search end point request come from frontend
 // http://172.18.0.7:8001/search/searchTerm
@@ -105,15 +99,12 @@ app.get("/info/:itemId", (req, res) => {
 app.put("/update/:itemId", (req, res) => {
   try {
     const { itemId } = req.params;
-    const isNumeric = !isNaN(itemId); //chick itemID if it is String or number
 
-    const key = isNumeric ? "id" : "title";
-    const value = isNumeric ? parseInt(itemId) : itemId;
     //chick if the item exist in db
     //if itemId <= 4 because we have for item
-    if (value <= 4 || !isNumeric) {
+    if (itemId <= 4) {
       // Query the catalog table in the SQLite database by item ID or title
-      db.all(`SELECT * FROM catalog WHERE ${key} = ?`, [value], (err, rows) => {
+      db.all(`SELECT * FROM catalog WHERE id = ?`, [itemId], (err, rows) => {
         if (err) {
           console.error(err.message);
           return res.status(500).json({ error: "Internal server error" });
@@ -129,8 +120,8 @@ app.put("/update/:itemId", (req, res) => {
 
           // Update the quantity in the database
           db.run(
-            `UPDATE catalog SET quantity = ? WHERE ${key} = ?`,
-            [updatedQuantity, value],
+            `UPDATE catalog SET quantity = ? WHERE id = ?`,
+            [updatedQuantity, itemId],
             (updateErr) => {
               if (updateErr) {
                 console.error(updateErr.message);
@@ -139,16 +130,15 @@ app.put("/update/:itemId", (req, res) => {
               //send name of item to order server
               res.status(200).json({
                 title: title,
-                message: "Quantity updated successfully",
               });
             }
           );
         } else {
-          res.status(404).json({ error: "Item not found or out of stock" });
+          res.status(400).json({ message: "Item out of stock" });
         }
       });
     } else {
-      res.status(404).json({ error: "Item not found or out of stock" });
+      res.status(404).json({ message: "Item not found" });
     }
   } catch (e) {
     res.status(500).json({ error: e.message });
