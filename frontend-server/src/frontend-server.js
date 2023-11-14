@@ -86,15 +86,15 @@ app.get("/search/:query", (req, res) => {
 });
 
 // the Api can purchase by item ID or item name
-//purchase end point http://172.18.0.6:8000/purchase/subject
-app.post("/purchase/:subject", (req, res) => {
-  const { subject } = req.params;
+//purchase end point http://172.18.0.6:8000/purchase/itemID
+app.post("/purchase/:itemID", (req, res) => {
+  const { itemID } = req.params;
 
   const orderOptions = {
-    //call order service http://172.18.0.8:8002/purchase/subject
+    //call order service http://172.18.0.8:8002/purchase/itemID
     hostname: "172.18.0.8",
     port: 8002,
-    path: `/purchase/${subject}`,
+    path: `/purchase/${itemID}`,
     method: "POST",
   };
 
@@ -107,15 +107,18 @@ app.post("/purchase/:subject", (req, res) => {
     });
     //same as above
     orderRes.on("end", () => {
+      const responseObject = JSON.parse(data);
       if (orderRes.statusCode === 200) {
-        const responseObject = JSON.parse(data);
-
         res.json({
-          message: ` ${responseObject.message} `,
+          message: ` ${responseObject.message} `, //item bought successfully
+        });
+      } else if (orderRes.statusCode === 404) {
+        res.status(404).json({
+          message: ` ${responseObject.message} `, //item not found
         });
       } else {
-        res.status(500).json({
-          error: "Error updating stock from frontend",
+        res.status(400).json({
+          message: ` ${responseObject.message} `, //item out of stock
         });
       }
     });
