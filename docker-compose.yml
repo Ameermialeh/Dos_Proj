@@ -2,16 +2,16 @@ version: '3'
 services:
   frontend-server:
     build: 
-      context: ./frontend-server
+      context: ./frontend-server 
     container_name: frontend-container
     ports:
       - "8000:8000"
-    volumes:
+    volumes: # host files : image file ,when edit on file in /app/src then same edit will be on files in .\frontend-server\src
       - .\frontend-server\src:/app/src
     networks:
-      internal-network:
-        ipv4_address: 172.18.0.6
-    depends_on:
+      internal-network: #name of network
+        ipv4_address: 172.18.0.6 #ip for frontend server
+    depends_on: # to run should catalog-server and order-server run before
       - catalog-server
       - order-server
 
@@ -38,7 +38,7 @@ services:
       - "8001:8001"
     volumes:
       - .\catalog-server\src:/app/src
-      - .\catalog-server\catalog.db:/app/catalog.db
+      - .\catalog-server\catalog.db:/app/catalog.db #db file in host : db file in image
     networks:
       internal-network:
         ipv4_address: 172.18.0.7
